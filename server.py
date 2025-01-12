@@ -29,7 +29,7 @@ class Server:
                 print(f"Waiting for message from {client.name}")
                 data = client.socket.recv(MESSAGE_SIZE)
                 message = data.decode('utf-8')
-                if message == 'BYE':
+                if message == 'CLOSE_CLIENT':
                     break
 
                 self.handle_message(client, message)
@@ -45,6 +45,10 @@ class Server:
         command = message[0]
         arg = message[1] if len(message) > 1 else None
 
+        if(arg is not None and arg == 'chat_mode'):
+            self.send_message_in_chat(client, command)
+            return
+
         if(command == 'CREATE_CHAT'):
             self.create_chat(client)
         elif(command == 'JOIN_CHAT'):
@@ -52,8 +56,7 @@ class Server:
         elif(command == 'EXIT_CHAT'):
             self.exit_chat(client)
         else:
-            self.send_message_in_chat(client, message)
-            client.send_message("a")
+            self.send_message_in_chat(client, command)
 
 
     def accept_connection(self):
@@ -69,17 +72,17 @@ class Server:
         chat.add_client(client)
         self.__chats[chat.id] = chat
         client.chat_id = chat.id
-        client.send_message(f"Chat created with id {chat.id}")
+        client.send_message(f"Chat created with id {chat.id}, you can now send messages:")
 
     def join_chat(self, client, chat_id):
-        chat = self.__chats[chat_id]
+        chat = self.__chats.get(chat_id)
         if(chat is None):
             client.send_message(f"Chat {chat_id} does not exist")
             return
 
         chat.add_client(client)
         client.chat_id = chat_id
-        client.send_message(f"Joined chat {chat_id}")
+        client.send_message(f"Joined chat {chat_id}, you can now send messages:")
 
     def exit_chat(self, client):
         chat = self.__chats[client.chat_id]
@@ -101,7 +104,7 @@ class Server:
             try:
                 if(c.name != client.name):
                     print(f"Sending message to {c.name}")
-                    c.send_message(f"{client.name}: {message}")
+                    c.send_message(f"[{client.name}]: {message}")
             except socket.error as e:
                 print(f"Error sending message to {c.name}: {e}")
 
@@ -140,11 +143,14 @@ class Client:
 
     def send_message_and_await_response(self, data):
         self.send_message(data)
-        self.receive_message()
+        start_new_thread(self.receive_message, ())
         
     def receive_message(self):
-        data = self.socket.recv(MESSAGE_SIZE).decode()
-        self.handle_response(data)
+        try:
+            data = self.socket.recv(MESSAGE_SIZE).decode('utf-8')
+            self.handle_response(data)
+        except socket.error as e:
+            print(f"Error receiving message: {e}")
 
     def send_message(self, message):
         try:
@@ -156,7 +162,7 @@ class Client:
         print(response)
 
     def close(self):
-        self.__socket.close()
+        self.socket.close()
         print("Connection closed")
 
 
