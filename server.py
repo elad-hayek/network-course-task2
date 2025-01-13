@@ -18,7 +18,6 @@ SAVE_FILE_PATH = "data.json"
 
 class Server:
     def __init__(self):
-        self.__clients = {}
         self.__chat = Chat()
         self.__server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__server.bind((HOST, PORT))
@@ -63,6 +62,7 @@ class Server:
 
     def close_client(self, client):
         print(f"Closing connection to {client.name}")
+        self.__chat.remove_client(client)
         client.socket.close()
 
     def send_message_in_chat(self, client, message):
