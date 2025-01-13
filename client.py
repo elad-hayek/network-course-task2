@@ -46,8 +46,10 @@ def show_menu(client):
             return False
         elif(message == '2'):
             chat_id = input("Enter chat id: ")
-            client.send_message_and_await_response(f'JOIN_CHAT&&{chat_id}')
-            # TODO: check if chat exists if not show menu again
+            client.send_message(f'JOIN_CHAT&&{chat_id}')
+            data = client.receive_message()
+            if(data == "Chat does not exist"):
+                continue
             return False
         elif(message == '3'):
             client.send_message("CLOSE_CLIENT")

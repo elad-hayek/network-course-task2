@@ -77,7 +77,7 @@ class Server:
     def join_chat(self, client, chat_id):
         chat = self.__chats.get(chat_id)
         if(chat is None):
-            client.send_message(f"Chat {chat_id} does not exist")
+            client.send_message("Chat does not exist")
             return
 
         chat.add_client(client)
@@ -149,6 +149,7 @@ class Client:
         try:
             data = self.socket.recv(MESSAGE_SIZE).decode('utf-8')
             self.handle_response(data)
+            return data
         except socket.error as e:
             print(f"Error receiving message: {e}")
 
