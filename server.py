@@ -1,12 +1,10 @@
 
-# for server
 import socket
 from _thread import *
-import os
 from datetime import datetime
+from client_class import Client 
+from chat import Chat
 
-# for chat
-import uuid 
 
 HOST = '127.0.0.1'
 PORT = 65421
@@ -84,66 +82,11 @@ class Server:
     def save_data(self, data):
         with open(SAVE_FILE_PATH, "a") as file:
             file.write(data)
-            
 
     def close_server(self):
         print("Closing server")
         self.__server.close()
 
-
-MESSAGE_SIZE = 1024
-
-class Client:
-    def __init__(self, name, address = "", client_socket = None):
-        self.name = name
-        self.address = address
-        self.chat_id = None
-
-        if(client_socket):
-            self.socket = client_socket
-        else:
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    def connect_to_server(self, server_ip, server_port):
-        print(f"Connecting to server {server_ip}:{server_port}")
-        try:
-            self.socket.connect((server_ip, server_port))
-            self.socket.sendall(self.name.encode())
-            response = self.socket.recv(MESSAGE_SIZE).decode('utf-8')
-            print(response)
-
-        except socket.error as e:
-            print(f"Error connecting to server: {e}")
-
-
-    def receive_message(self):
-        data = self.socket.recv(MESSAGE_SIZE).decode('utf-8')
-        print(data) 
-        return data
-
-    def send_message(self, message):
-        try:
-            self.socket.send(message.encode())
-        except socket.error as e:
-            print(f"Error sending message: {e}") 
-
-    def close(self):
-        self.socket.close()
-        print("Connection closed")
-
-
-class Chat:
-    def __init__(self):
-        self.messages = []
-        self.id = str(uuid.uuid4())
-        self.clients = []
-
-    def add_client(self, client):
-        client.chat_id = self.id
-        self.clients.append(client)
-
-    def remove_client(self, client):
-        self.clients.remove(client)
 
 
 def main():

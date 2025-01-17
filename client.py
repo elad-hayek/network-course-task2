@@ -1,4 +1,4 @@
-from server import Client 
+from client_class import Client 
 from _thread import *
 import time
 
@@ -10,8 +10,6 @@ def recive_messages(client):
         try:
             client.receive_message()
         except Exception:
-            print(f"Error receiving message from server press Enter to exit")
-            client.close()
             stop_recive = True
 
 def main():
@@ -27,6 +25,8 @@ def main():
         message = input()
 
         if(stop_recive):
+            print(f"Sorry, {client.name} The server is not available!")
+            client.close()
             break
 
         if(message == 'exit'):
