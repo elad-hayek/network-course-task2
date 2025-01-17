@@ -2,8 +2,8 @@
 # for server
 import socket
 from _thread import *
-import json
 import os
+from datetime import datetime
 
 # for chat
 import uuid 
@@ -13,7 +13,7 @@ PORT = 65421
 THREAD_COUNT = 10
 MESSAGE_SIZE = 1024
 
-SAVE_FILE_PATH = "data.json"
+SAVE_FILE_PATH = "data.txt"
 
 
 class Server:
@@ -26,7 +26,7 @@ class Server:
         print(f"Server is listening on port {PORT}")
 
     def client_handler(self, client):
-        client.send_message('You are now connected to the server and can send messages:')
+        client.send_message('You are now connected to the server and can send messages.\n To send a user a message write it like user@@message:')
 
         while True:
             try:
@@ -67,29 +67,27 @@ class Server:
 
     def send_message_in_chat(self, client, message):
         print(f"Sending message in chat {client.chat_id}")
-        self.__chat.messages.append({"from": client.name, "message": message})
-        self.save_data()
+        now = datetime.now()
+        datetime_string = now.strftime("%Y-%m-%d %H:%M:%S")
+        message_data = f"(from : {client.name}, message: {message}, datetime: {datetime_string})\n"
+        self.__chat.messages.append(message_data)
+        self.save_data(message_data)
 
         data = message.split('@@')
         client_name = data[0]
         message = data[1] if len(data) > 1 else ""
-        try:
-            for c in self.__chat.clients:
-                if(c.name == client_name and c.name != client.name):
-                    print(f"Sending message to {c.name}")
-                    c.send_message(f"[{client.name}]: {message}")
-        except socket.error as e:
-            print(f"Error sending message to {c.name}: {e}")
+        for c in self.__chat.clients:
+            if(c.name == client_name and c.name != client.name):
+                print(f"Sending message to {c.name}")
+                c.send_message(f"[{client.name}]: {message}")
 
-    def save_data(self):
-        with open(SAVE_FILE_PATH, "w") as file:
-            json.dump(self.__chat.messages, file, indent=4)
-
+    def save_data(self, data):
+        with open(SAVE_FILE_PATH, "a") as file:
+            file.write(data)
+            
 
     def close_server(self):
         print("Closing server")
-        self.save_data()
-
         self.__server.close()
 
 
@@ -119,12 +117,9 @@ class Client:
 
 
     def receive_message(self):
-        try:
-            data = self.socket.recv(MESSAGE_SIZE).decode('utf-8')
-            print(data) 
-            return data
-        except socket.error as e:
-            print(f"Error receiving message: {e}")
+        data = self.socket.recv(MESSAGE_SIZE).decode('utf-8')
+        print(data) 
+        return data
 
     def send_message(self, message):
         try:
